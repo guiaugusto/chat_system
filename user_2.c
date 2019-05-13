@@ -53,9 +53,22 @@ void open_person_queue(char *person_name){
 }
 
 void send_message(){
-    scanf("%s", message);
 
     scanf("%s", person_name);
+    getchar();
+
+    int counter_message = 0;
+    char caracter;
+
+    while(1){
+      scanf("%c", &caracter);
+      if(caracter == '\n' || counter_message > 500){
+          break;
+      }
+
+      message[counter_message] = caracter;
+      counter_message++;
+    }
 
     open_person_queue(person_name);
 
@@ -68,7 +81,7 @@ void send_message(){
     int i = 0;
     int current_size = sizeof(me);
 
-    printf("current size: %d - person name: %d\n\n", current_size, (int) sizeof(person_name));
+    // printf("current size: %d - person name: %d\n\n", current_size, (int) sizeof(person_name));
 
     // Ajustar ao tamanho do vetor de person_name
     for(counter = current_size, i = 0; i < strlen(person_name); counter++, i++){
@@ -81,7 +94,7 @@ void send_message(){
         complete_message[counter] = message[i];
     }
 
-    printf("%s", complete_message);
+    // printf("%s", complete_message);
 
     int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
 
