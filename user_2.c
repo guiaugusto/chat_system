@@ -98,7 +98,7 @@ void *receive_messages(){
         memset(complete_response, 0, sizeof(complete_response));
         memset(sender_message, 0, sizeof(sender_message));
     }
-    
+
     pthread_exit(NULL);
 }
 
