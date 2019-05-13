@@ -80,46 +80,28 @@ void send_message(){
 }
 
 void *receive_messages(){
-    char sender_name[10];
-    char user_name[10];
-    char sender_message[500];
-    int i, j;
+  char *sender_name;
+  char *user_name;
+  char *sender_message;
 
-    while(1){
-        int receive = mq_receive(my_queue, (void*) &complete_response, sizeof(complete_response), 0);
+  while(1){
+      int receive = mq_receive(my_queue, (void*) &complete_response, sizeof(complete_response), 0);
 
-        if(receive < 0){
-            perror("mq_receive:");
-            exit(1);
-        }
+      char split[] = ":";
+      char *ptr;
+      sender_name = strtok(complete_response, split);
+      user_name = strtok(NULL, split);
+      sender_message = strtok(NULL, split);
 
-        for(i = 0; complete_response[i] != ':'; i++){
-            sender_name[i] = complete_response[i];
-        }
+      printf("%s: %s\n", sender_name, sender_message);
 
-        i++;
-
-        for(j = 0; complete_response[i] != ':'; i++, j++){
-            user_name[j] = complete_response[i];
-        }
-
-        i++;
-
-        for(j = 0; i < strlen(complete_response); i++, j++){
-            sender_message[j] = complete_response[i];
-        }
-
-        if(complete_response != ""){
-            printf("%s: %s\n", sender_name, sender_message);
-            complete_response[0] = '\0';
-        }
-
-        memset(user_name, 0, sizeof(user_name));
-        memset(sender_name, 0, sizeof(sender_name));
-        memset(complete_response, 0, sizeof(complete_response));
-        memset(sender_message, 0, sizeof(sender_message));
-    }
-    pthread_exit(NULL);
+      memset(user_name, 0, sizeof(user_name));
+      memset(sender_name, 0, sizeof(sender_name));
+      memset(complete_response, 0, sizeof(complete_response));
+      memset(sender_message, 0, sizeof(sender_message));
+  }
+  
+  pthread_exit(NULL);
 }
 
 int main(){
