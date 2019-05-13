@@ -40,8 +40,6 @@ void open_person_queue(char *person_name){
     char queue_name[16] = "/chat-";
     int i, j;
 
-    // queue_name = "/chat-";
-
     for(i = 6, j = 0; j < strlen(person_name); i++, j++){
         queue_name[i] = person_name[j];
     }
@@ -53,9 +51,11 @@ void open_person_queue(char *person_name){
 }
 
 void send_message(){
-
     scanf("%s", person_name);
     getchar();
+
+    memset(message, 0, sizeof(message));
+    memset(complete_message, 0, sizeof(complete_message));
 
     int counter_message = 0;
     char caracter;
@@ -70,20 +70,18 @@ void send_message(){
       counter_message++;
     }
 
+    counter_message = 0;
+
     open_person_queue(person_name);
 
-    //
-    for(counter = 0; counter < 10; counter++){
+    for(counter = 0; counter < strlen(me); counter++){
         complete_message[counter] = me[counter];
     }
 
-    complete_message[10] = ':';
+    complete_message[strlen(me)] = ':';
     int i = 0;
-    int current_size = sizeof(me);
+    int current_size = strlen(me) + 1;
 
-    // printf("current size: %d - person name: %d\n\n", current_size, (int) sizeof(person_name));
-
-    // Ajustar ao tamanho do vetor de person_name
     for(counter = current_size, i = 0; i < strlen(person_name); counter++, i++){
         complete_message[counter] = person_name[i];
     }
@@ -94,14 +92,14 @@ void send_message(){
         complete_message[counter] = message[i];
     }
 
-    // printf("%s", complete_message);
-
     int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
 
     if (send < 0){
         perror("guila mq_send");
         exit(1);
     }
+
+    counter = 0;
 }
 
 void *receive_messages(){
@@ -138,6 +136,9 @@ void *receive_messages(){
             printf("(%s): %s\n", sender_name, sender_message);
             complete_response[0] = '\0';
         }
+
+        memset(complete_response, 0, sizeof(complete_response));
+        memset(sender_message, 0, sizeof(sender_message));
     }
     pthread_exit(NULL);
 }
