@@ -136,7 +136,9 @@ void *receive_messages(){
             printf("(%s): %s\n", sender_name, sender_message);
             complete_response[0] = '\0';
         }
-
+        
+        memset(user_name, 0, sizeof(user_name));
+        memset(sender_name, 0, sizeof(sender_name));
         memset(complete_response, 0, sizeof(complete_response));
         memset(sender_message, 0, sizeof(sender_message));
     }
