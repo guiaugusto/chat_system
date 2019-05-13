@@ -13,13 +13,11 @@
 char complete_message[522];
 char complete_response[522];
 char person_name[10];
-char message[500];
 
 mqd_t my_queue;
 mqd_t person_queue;
 
 char me[] = "guila";
-int counter;
 struct mq_attr attr;
 
 void open_queue(){
@@ -51,46 +49,25 @@ void open_person_queue(char *person_name){
 }
 
 void send_message(){
-    scanf("%s", person_name);
+    memset(complete_message, 0, sizeof(complete_message));
+    int i = 0, j = strlen(me) + 1;
+
+    scanf("%[^\n]*c", complete_message);
     getchar();
 
-    memset(message, 0, sizeof(message));
-    memset(complete_message, 0, sizeof(complete_message));
-
-    int counter_message = 0;
-    char caracter;
-
+    // Tratar o nome do usuário, quando inserido incorretamente
     while(1){
-      scanf("%c", &caracter);
-      if(caracter == '\n' || counter_message > 500){
+        if(complete_message[j] == ':'){
           break;
-      }
+        }
 
-      message[counter_message] = caracter;
-      counter_message++;
+        person_name[i] = complete_message[j];
+
+        i++;
+        j++;
     }
-
-    counter_message = 0;
 
     open_person_queue(person_name);
-
-    for(counter = 0; counter < strlen(me); counter++){
-        complete_message[counter] = me[counter];
-    }
-
-    complete_message[strlen(me)] = ':';
-    int i = 0;
-    int current_size = strlen(me) + 1;
-
-    for(counter = current_size, i = 0; i < strlen(person_name); counter++, i++){
-        complete_message[counter] = person_name[i];
-    }
-
-    complete_message[counter] = ':';
-
-    for(counter = strlen(complete_message), i = 0; i < strlen(message); counter++, i++){
-        complete_message[counter] = message[i];
-    }
 
     int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
 
@@ -98,8 +75,6 @@ void send_message(){
         perror("guila mq_send");
         exit(1);
     }
-
-    counter = 0;
 }
 
 void *receive_messages(){
@@ -133,10 +108,10 @@ void *receive_messages(){
         }
 
         if(complete_response != ""){
-            printf("(%s): %s\n", sender_name, sender_message);
+            printf("%s: %s\n", sender_name, sender_message);
             complete_response[0] = '\0';
         }
-        
+
         memset(user_name, 0, sizeof(user_name));
         memset(sender_name, 0, sizeof(sender_name));
         memset(complete_response, 0, sizeof(complete_response));
