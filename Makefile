@@ -7,7 +7,7 @@ SRCFOLDER := src/
 # .o
 OBJFOLDER := obj/
 CC := gcc
-CFLAGS := -ansi -lrt -pthread
+CFLAGS := -lrt -pthread
 SRCFILES := $(wildcard src/*.c)
 
 all: $(SRCFILES:src/%.c=obj/%.o)
@@ -22,3 +22,5 @@ run: bin/prog
 clean:
 	rm -rf obj/*
 	rm -rf bin/*
+
+run-all: clean all run
