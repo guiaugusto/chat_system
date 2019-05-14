@@ -48,7 +48,11 @@ void open_person_queue(char *person_name){
     }
 }
 
-void send_message(){
+void close_person_queue(char *person_name){
+    mq_close(person_queue);
+}
+
+int send_message(){
     memset(complete_message, 0, sizeof(complete_message));
     int i = 0, j = strlen(me) + 1;
 
@@ -56,6 +60,14 @@ void send_message(){
 
     scanf("%[^\n]*c", complete_message);
     getchar();
+
+    if(strcmp(complete_message, "sair") == 0){
+        mq_close(my_queue);
+        char queue_name[16] = "/chat-";
+        strcat(queue_name, me);
+        mq_unlink(queue_name);
+        return 0;
+    }
 
     while(1){
         if(complete_message[j] == ':'){
@@ -76,6 +88,10 @@ void send_message(){
         perror("guiaugusto mq_send");
         exit(1);
     }
+
+    close_person_queue(person_name);
+
+    return 1;
 }
 
 void *receive_messages(){

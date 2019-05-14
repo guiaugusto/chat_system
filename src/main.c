@@ -1,4 +1,5 @@
 #include "user.h"
+#include "file.h"
 
 int main(){
 
@@ -8,12 +9,10 @@ int main(){
 
     pthread_t thread;
 
+
     pthread_create(&thread, NULL, receive_messages, NULL);
 
-    while(1){
-        send_message();
-    }
-
+    while(send_message());
 
     return 0;
 }
