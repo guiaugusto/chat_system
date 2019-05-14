@@ -1,4 +1,8 @@
 #include "user.h"
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
 
 void set_chat_configuration(){
     attr.mq_maxmsg = 10;
@@ -48,6 +52,8 @@ void send_message(){
     memset(complete_message, 0, sizeof(complete_message));
     int i = 0, j = strlen(me) + 1;
 
+    printf(ANSI_COLOR_GREEN);
+
     scanf("%[^\n]*c", complete_message);
     getchar();
 
@@ -85,7 +91,8 @@ void *receive_messages(){
       user_name = strtok(NULL, split);
       sender_message = strtok(NULL, split);
 
-      printf("%s: %s\n", sender_name, sender_message);
+      printf(ANSI_COLOR_BLUE "%s: %s", sender_name, sender_message);
+      printf(ANSI_COLOR_GREEN "\n");
 
       memset(user_name, 0, sizeof(user_name));
       memset(sender_name, 0, sizeof(sender_name));
