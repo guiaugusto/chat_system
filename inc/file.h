@@ -11,6 +11,6 @@
 #include <string.h>
 #include <pthread.h>
 
-void list_all_files_in_mqueue_directory();
+void show_all_users_online();
 
 #endif

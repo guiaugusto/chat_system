@@ -67,6 +67,9 @@ int send_message(){
         strcat(queue_name, me);
         mq_unlink(queue_name);
         return 0;
+    }else if(strcmp(complete_message, "list") == 0){
+        show_all_users_online();
+        return 1;
     }
 
     while(1){
