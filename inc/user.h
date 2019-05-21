@@ -31,5 +31,6 @@ void open_person_queue(char *person_name);
 void close_person_queue(char *person_name);
 int send_message();
 void *receive_messages();
+void control_handler(int sig);
 
 #endif

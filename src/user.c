@@ -1,4 +1,5 @@
 #include "user.h"
+#include "file.h"
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
@@ -12,7 +13,7 @@ void set_chat_configuration(){
 
 void define_user_name(){
     printf("Username (max 10 characters): ");
-    scanf("%s", me);
+    scanf("%[^\n]*c", me);
     getchar();
     printf("Seu username é %s, não se esqueça!\n", me);
 }
@@ -53,10 +54,11 @@ void close_person_queue(char *person_name){
 }
 
 int send_message(){
+    printf(ANSI_COLOR_GREEN "\n");
     memset(complete_message, 0, sizeof(complete_message));
     int i = 0, j = strlen(me) + 1;
 
-    printf(ANSI_COLOR_GREEN);
+    signal(SIGINT, control_handler);
 
     scanf("%[^\n]*c", complete_message);
     getchar();
@@ -69,6 +71,9 @@ int send_message(){
         return 0;
     }else if(strcmp(complete_message, "list") == 0){
         show_all_users_online();
+        return 1;
+    }else if(strcmp(complete_message, "") == 0){
+        printf("\nMensagem está vazia\n");
         return 1;
     }
 
@@ -120,4 +125,10 @@ void *receive_messages(){
   }
 
   pthread_exit(NULL);
+}
+
+void control_handler(int sig){
+    signal(sig, SIG_IGN);
+    printf("\nPara parar a execução, você deverá digitar: sair\n");
+    signal(SIGINT, control_handler);
 }

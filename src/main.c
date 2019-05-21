@@ -9,7 +9,6 @@ int main(){
 
     pthread_t thread;
 
-
     pthread_create(&thread, NULL, receive_messages, NULL);
 
     while(send_message());
