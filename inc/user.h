@@ -11,8 +11,6 @@
 #include <string.h>
 #include <pthread.h>
 
-char complete_message[522];
-char complete_response[522];
 char person_name[10];
 char message[500];
 char me[10];
@@ -20,17 +18,10 @@ char me[10];
 mqd_t my_queue;
 mqd_t person_queue;
 
-int counter;
-struct mq_attr attr;
 
-void set_chat_configuration();
 void chat_name(char *queue_name, char *user_name);
 void define_user_name();
-void open_queues();
 void open_person_queue(char *person_name);
 void close_person_queue(char *person_name);
-int send_message();
-void *receive_messages();
-void control_handler(int sig);
 
 #endif

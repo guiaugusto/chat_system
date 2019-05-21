@@ -1,5 +1,6 @@
 #include "user.h"
 #include "file.h"
+#include "chat.h"
 
 int main(){
 
