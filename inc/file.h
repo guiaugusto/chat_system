@@ -12,5 +12,6 @@
 #include <pthread.h>
 
 void show_all_users_online();
+int validate_destiny_user(char *username);
 
 #endif

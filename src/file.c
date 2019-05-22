@@ -42,3 +42,32 @@ void show_all_users_online(){
 
     closedir(dr);
 }
+
+int validate_destiny_user(char *username){
+    struct dirent *de;
+    int exists = 0;
+    char *queue_name;
+
+    DIR *dr = opendir("/dev/mqueue");
+
+    if(dr == NULL){
+        printf("Diretório não pôde ser aberto." );
+        return -1;
+    }
+
+    char queue_destiny_name[15] = "chat-";
+    strcat(queue_destiny_name, username);
+
+    while((de = readdir(dr)) != NULL){
+        queue_name = de->d_name;
+        if(strcmp(queue_destiny_name, queue_name) == 0){
+            exists = 1;
+        }
+    }
+
+    if(!exists){
+        return 0;
+    }else{
+        return 1;
+    }
+}

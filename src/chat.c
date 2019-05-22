@@ -48,6 +48,7 @@ int send_message(){
         printf("\nMensagem está vazia\n");
         return 1;
     }
+
     while(1){
         if(complete_message[j] == ':'){
           break;
@@ -57,6 +58,11 @@ int send_message(){
 
         i++;
         j++;
+    }
+
+    if(validate_destiny_user(person_name) == 0){
+        printf("UNKNOWNUSER %s\n", person_name);
+        return 1;
     }
 
     open_person_queue(person_name);
