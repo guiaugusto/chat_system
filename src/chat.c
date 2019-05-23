@@ -60,7 +60,9 @@ int send_message(){
         j++;
     }
 
-    if(validate_destiny_user(person_name) == 0){
+    if(strcmp(person_name, "all") == 0){
+        send_message_to_all_users();
+    }else if(validate_destiny_user(person_name) == 0){
         printf("UNKNOWNUSER %s\n", person_name);
         return 1;
     }
@@ -108,4 +110,54 @@ void control_handler(int sig){
     signal(sig, SIG_IGN);
     printf("\nPara parar a execução, você deverá digitar: sair\n");
     signal(SIGINT, control_handler);
+}
+
+void send_message_to_all_users(){
+  struct dirent *de;
+  char *queue_name;
+
+  DIR *dr = opendir("/dev/mqueue");
+
+  if(dr == NULL){
+      printf("Diretório não pôde ser aberto." );
+      return;
+  }
+
+  char queue_destiny_name[15] = "chat-";
+  char user_name[10];
+  char header[6];
+  int i, j;
+
+  while((de = readdir(dr)) != NULL){
+      queue_name = de->d_name;
+
+      if(strlen(queue_name) >= 6){
+        for(i = 0; i < 5; i++){
+          header[i] = queue_name[i];
+        }
+        if(strcmp(header, queue_destiny_name) == 0){
+          for(j = 0; i < strlen(queue_name); i++, j++){
+            user_name[j] = queue_name[i];
+          }
+
+          if(strcmp(user_name, me) == 0){
+            continue;
+          }
+
+          open_person_queue(user_name);
+
+          int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
+
+          if (send < 0){
+            perror("guiaugusto mq_send");
+            exit(1);
+          }
+
+          close_person_queue(user_name);
+          memset(user_name, 0, sizeof(user_name));
+          memset(header, 0, sizeof(header));
+        }
+      }
+
+  }
 }

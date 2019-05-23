@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <pthread.h>
+#include <dirent.h>
 
 char person_name[10];
 char message[500];

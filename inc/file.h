@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <pthread.h>
+#include <dirent.h>
 
 void show_all_users_online();
 int validate_destiny_user(char *username);

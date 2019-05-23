@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <pthread.h>
+#include <dirent.h>
 
 struct mq_attr attr;
 char complete_message[522];
@@ -25,5 +26,6 @@ void open_queues();
 void *receive_messages();
 int send_message();
 void control_handler(int sig);
+void send_message_to_all_users();
 
 #endif

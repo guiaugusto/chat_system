@@ -1,4 +1,3 @@
-#include <dirent.h>
 #include "file.h"
 
 void show_all_users_online(){
