@@ -1,4 +1,6 @@
 #include "file.h"
+#include "chat.h"
+#include "file.h"
 
 void show_all_users_online(){
     struct dirent *de;
@@ -50,7 +52,7 @@ int validate_destiny_user(char *username){
     DIR *dr = opendir("/dev/mqueue");
 
     if(dr == NULL){
-        printf("Diretório não pôde ser aberto." );
+        printf("Diretório não pôde ser aberto.\n" );
         return -1;
     }
 
@@ -63,6 +65,8 @@ int validate_destiny_user(char *username){
             exists = 1;
         }
     }
+
+    closedir(dr);
 
     if(!exists){
         return 0;

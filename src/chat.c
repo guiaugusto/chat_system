@@ -26,7 +26,7 @@ void open_queues(){
 }
 
 int send_message(){
-    printf(ANSI_COLOR_GREEN "\n");
+    printf(ANSI_COLOR_GREEN);
     memset(complete_message, 0, sizeof(complete_message));
     int i = 0, j = strlen(me) + 1;
 
@@ -40,6 +40,7 @@ int send_message(){
         char queue_name[16] = "/chat-";
         strcat(queue_name, me);
         mq_unlink(queue_name);
+        printf(ANSI_COLOR_RESET);
         return 0;
     }else if(strcmp(complete_message, "list") == 0){
         show_all_users_online();
@@ -62,6 +63,7 @@ int send_message(){
 
     if(strcmp(person_name, "all") == 0){
         send_message_to_all_users();
+        return 1;
     }else if(validate_destiny_user(person_name) == 0){
         printf("UNKNOWNUSER %s\n", person_name);
         return 1;
@@ -94,8 +96,8 @@ void *receive_messages(){
       user_name = strtok(NULL, split);
       sender_message = strtok(NULL, split);
 
-      printf(ANSI_COLOR_BLUE "%s: %s", sender_name, sender_message);
-      printf(ANSI_COLOR_GREEN "\n");
+      printf(ANSI_COLOR_BLUE "%s: %s\n", sender_name, sender_message);
+      printf(ANSI_COLOR_GREEN);
 
       memset(user_name, 0, sizeof(user_name));
       memset(sender_name, 0, sizeof(sender_name));
@@ -130,7 +132,6 @@ void send_message_to_all_users(){
 
   while((de = readdir(dr)) != NULL){
       queue_name = de->d_name;
-
       if(strlen(queue_name) >= 6){
         for(i = 0; i < 5; i++){
           header[i] = queue_name[i];
@@ -140,24 +141,24 @@ void send_message_to_all_users(){
             user_name[j] = queue_name[i];
           }
 
-          if(strcmp(user_name, me) == 0){
-            continue;
+          if(strcmp(user_name, me) != 0){
+            open_person_queue(user_name);
+
+            int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
+
+            if (send < 0){
+              perror("guiaugusto mq_send");
+              exit(1);
+            }
+
+            close_person_queue(user_name);
+            memset(user_name, 0, sizeof(user_name));
+            memset(header, 0, sizeof(header));
           }
 
-          open_person_queue(user_name);
-
-          int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
-
-          if (send < 0){
-            perror("guiaugusto mq_send");
-            exit(1);
-          }
-
-          close_person_queue(user_name);
-          memset(user_name, 0, sizeof(user_name));
-          memset(header, 0, sizeof(header));
         }
       }
-
   }
+
+  closedir(dr);
 }
