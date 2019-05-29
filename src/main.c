@@ -5,7 +5,7 @@
 int main(){
 
     set_chat_configuration();
-    define_user_name();
+    while(define_user_name());
     open_queues();
 
     pthread_t thread;

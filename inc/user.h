@@ -21,7 +21,7 @@ mqd_t person_queue;
 
 
 void chat_name(char *queue_name, char *user_name);
-void define_user_name();
+int define_user_name();
 void open_person_queue(char *person_name);
 void close_person_queue(char *person_name);
 

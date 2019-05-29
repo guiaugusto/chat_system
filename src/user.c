@@ -2,11 +2,17 @@
 #include "file.h"
 #include "chat.h"
 
-void define_user_name(){
+int define_user_name(){
     printf("Username (max 10 characters): ");
     scanf("%[^\n]*c", me);
     getchar();
-    printf("Seu username é %s, não se esqueça!\n", me);
+    if(validate_destiny_user(me)){
+      printf("Este username já está sendo usado!\n");
+      return 1;
+    }else{
+      printf("Seu username é %s, não se esqueça!\n", me);
+      return 0;
+    }
 }
 
 void open_person_queue(char *person_name){
