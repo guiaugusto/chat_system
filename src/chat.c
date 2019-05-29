@@ -46,30 +46,84 @@ int send_message(){
         show_all_users_online();
         return 1;
     }else if(strcmp(complete_message, "") == 0){
-        printf("\nMensagem está vazia\n");
+        printf("Mensagem está vazia""\n");
         return 1;
     }
 
-    while(1){
-        if(complete_message[j] == ':'){
-          break;
-        }
+    char split[] = ":";
+    char *username;
+    char *receiver_name;
+    char *person_message;
+    char message[501];
 
-        person_name[i] = complete_message[j];
+    strcpy(message, complete_message);
 
-        i++;
-        j++;
-    }
+    username = strtok(message, split);
+    receiver_name = strtok(NULL, split);
+    person_message = strtok(NULL, split);
 
-    if(strcmp(person_name, "all") == 0){
+    // Primeiro tipo de mensagem
+    if(strcmp(username, me) == 0){
+      if(receiver_name == NULL){
+        printf(
+          ANSI_COLOR_RESET
+          "Usuário destinatário inválido! Para saber como enviar uma "
+          "mensagem, digite: help."
+          ANSI_COLOR_GREEN
+          "\n"
+        );
+        return 1;
+      }else if(strcmp(receiver_name, "all") == 0){
         send_message_to_all_users();
         return 1;
-    }else if(validate_destiny_user(person_name) == 0){
-        printf("UNKNOWNUSER %s\n", person_name);
+      }else if(validate_destiny_user(receiver_name) == 0){
+        printf(
+          ANSI_COLOR_RESET
+          "UNKNOWNUSER %s\n"
+          ANSI_COLOR_GREEN,
+          receiver_name
+        );
         return 1;
+      }
+    }else{
+      // Segundo tipo de mensagem
+      if(username != NULL && receiver_name != NULL && person_message == NULL){
+        if(validate_destiny_user(username)){
+          person_message = receiver_name;
+          receiver_name = username;
+          username = me;
+
+          memset(complete_message, 0, sizeof(complete_message));
+          strcat(complete_message, username);
+          strcat(complete_message, ":");
+          strcat(complete_message, receiver_name);
+          strcat(complete_message, ":");
+          strcat(complete_message, person_message);
+        }else{
+          if(username != NULL && receiver_name == NULL){
+            printf(
+              ANSI_COLOR_RESET
+              "Mensagem vazia! Para saber como enviar uma "
+              "mensagem, digite: help."
+              ANSI_COLOR_GREEN
+              "\n"
+            );
+            return 1;
+          }else if(username == NULL){
+            printf(
+              ANSI_COLOR_RESET
+              "Usuário destinatário inválido! Para saber como enviar uma "
+              "mensagem, digite: help."
+              ANSI_COLOR_GREEN
+              "\n"
+            );
+            return 1;
+          }
+        }
+      }
     }
 
-    open_person_queue(person_name);
+    open_person_queue(receiver_name);
 
     int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
 
@@ -78,7 +132,7 @@ int send_message(){
         exit(1);
     }
 
-    close_person_queue(person_name);
+    close_person_queue(receiver_name);
 
     return 1;
 }
