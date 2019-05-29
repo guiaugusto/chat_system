@@ -96,8 +96,7 @@ void *receive_messages(){
       user_name = strtok(NULL, split);
       sender_message = strtok(NULL, split);
 
-      printf(ANSI_COLOR_BLUE "%s: %s\n", sender_name, sender_message);
-      printf(ANSI_COLOR_GREEN);
+      printf(ANSI_COLOR_BLUE "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
 
       memset(user_name, 0, sizeof(user_name));
       memset(sender_name, 0, sizeof(sender_name));
