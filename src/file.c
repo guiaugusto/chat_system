@@ -74,3 +74,46 @@ int validate_destiny_user(char *username){
         return 1;
     }
 }
+
+void show_queue_information(char *filename){
+  struct stat fileStat;
+  char pathname[30];
+  memset(pathname, 0, sizeof(pathname));
+  strcat(pathname, "/dev/mqueue");
+  strcat(pathname, filename);
+
+  if(stat(pathname, &fileStat) < 0){
+    perror("FileStat error\n");
+    exit(1);
+  }
+
+  printf(
+    ANSI_COLOR_YELLOW
+    "--------------------------------------------------\n"
+  );
+  printf("\t\t  Informations\n");
+  printf("--------------------------------------------------\n");
+  printf("  File Size: \t\t%d bytes\n", (int) fileStat.st_size);
+  printf("  Number of Links: \t%d\n", (int) fileStat.st_nlink);
+  printf("  File inode: \t\t%d\n", (int) fileStat.st_ino);
+  printf("  User Owner id: \t\t%d\n", (int) fileStat.st_uid);
+  printf("  Created: \t\t%s\n", ctime(&fileStat.st_ctime));
+
+  printf("  File Permissions: \t");
+  printf( (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+  printf( (fileStat.st_mode & S_IRUSR) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWUSR) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXUSR) ? "x" : "-");
+  printf( (fileStat.st_mode & S_IRGRP) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWGRP) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXGRP) ? "x" : "-");
+  printf( (fileStat.st_mode & S_IROTH) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWOTH) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXOTH) ? "x" : "-");
+  printf("\n");
+  printf(
+    "--------------------------------------------------"
+    ANSI_COLOR_GREEN
+    "\n"
+  );
+}
