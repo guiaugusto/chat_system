@@ -12,7 +12,7 @@ void open_queues(){
     char queue[16] = "/chat-";
     strcat(queue, me);
 
-     if((my_queue = mq_open(queue, O_RDWR|O_CREAT, 0666, &attr)) < 0){
+     if((my_queue = mq_open(queue, O_RDWR|O_CREAT, 0644, &attr)) < 0){
         perror("mq_open");
         exit(1);
     }
@@ -46,7 +46,12 @@ int send_message(){
         show_all_users_online();
         return 1;
     }else if(strcmp(complete_message, "") == 0){
-        printf("Mensagem está vazia""\n");
+        printf(ANSI_COLOR_YELLOW "Mensagem está vazia" ANSI_COLOR_GREEN "\n");
+        return 1;
+    }else if(strcmp(complete_message, "stats") == 0){
+        char queue_name[16] = "/chat-";
+        strcat(queue_name, me);
+        show_queue_information(queue_name);
         return 1;
     }
 
@@ -66,7 +71,7 @@ int send_message(){
     if(strcmp(username, me) == 0){
       if(receiver_name == NULL){
         printf(
-          ANSI_COLOR_RESET
+          ANSI_COLOR_RED
           "Usuário destinatário inválido! Para saber como enviar uma "
           "mensagem, digite: help."
           ANSI_COLOR_GREEN
@@ -78,12 +83,23 @@ int send_message(){
         return 1;
       }else if(validate_destiny_user(receiver_name) == 0){
         printf(
-          ANSI_COLOR_RESET
+          ANSI_COLOR_YELLOW
           "UNKNOWNUSER %s\n"
           ANSI_COLOR_GREEN,
           receiver_name
         );
         return 1;
+      }else{
+        if(person_message == NULL){
+          printf(
+            ANSI_COLOR_RED
+            "Mensagem vazia! Para saber como enviar uma "
+            "mensagem, digite: help."
+            ANSI_COLOR_GREEN
+            "\n"
+          );
+          return 1;
+        }
       }
     }else{
       // Segundo tipo de mensagem
@@ -100,25 +116,33 @@ int send_message(){
           strcat(complete_message, ":");
           strcat(complete_message, person_message);
         }else{
-          if(username != NULL && receiver_name == NULL){
-            printf(
-              ANSI_COLOR_RESET
-              "Mensagem vazia! Para saber como enviar uma "
-              "mensagem, digite: help."
-              ANSI_COLOR_GREEN
-              "\n"
-            );
-            return 1;
-          }else if(username == NULL){
-            printf(
-              ANSI_COLOR_RESET
-              "Usuário destinatário inválido! Para saber como enviar uma "
-              "mensagem, digite: help."
-              ANSI_COLOR_GREEN
-              "\n"
-            );
-            return 1;
-          }
+          printf(
+            ANSI_COLOR_RED
+            "Usuário inválido! Para saber como enviar uma "
+            "mensagem, digite: help."
+            ANSI_COLOR_GREEN
+            "\n"
+          );
+        }
+      }else{
+        if(username != NULL && receiver_name == NULL){
+          printf(
+            ANSI_COLOR_RED
+            "Mensagem vazia! Para saber como enviar uma "
+            "mensagem, digite: help."
+            ANSI_COLOR_GREEN
+            "\n"
+          );
+          return 1;
+        }else if(username == NULL){
+          printf(
+            ANSI_COLOR_RED
+            "Usuário destinatário inválido! Para saber como enviar uma "
+            "mensagem, digite: help."
+            ANSI_COLOR_GREEN
+            "\n"
+          );
+          return 1;
         }
       }
     }
@@ -163,7 +187,12 @@ void *receive_messages(){
 
 void control_handler(int sig){
     signal(sig, SIG_IGN);
-    printf("\nPara parar a execução, você deverá digitar: sair\n");
+    printf(
+      ANSI_COLOR_RED
+      "\nPara parar a execução, você deverá digitar: sair"
+      ANSI_COLOR_GREEN
+      "\n"
+    );
     signal(SIGINT, control_handler);
 }
 
