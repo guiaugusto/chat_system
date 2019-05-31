@@ -96,7 +96,7 @@ void show_queue_information(char *filename){
   printf("  File Size: \t\t%d bytes\n", (int) fileStat.st_size);
   printf("  Number of Links: \t%d\n", (int) fileStat.st_nlink);
   printf("  File inode: \t\t%d\n", (int) fileStat.st_ino);
-  printf("  User Owner id: \t\t%d\n", (int) fileStat.st_uid);
+  printf("  User Owner id: \t%d\n", (int) fileStat.st_uid);
   printf("  Created: \t\t%s\n", ctime(&fileStat.st_ctime));
 
   printf("  File Permissions: \t");

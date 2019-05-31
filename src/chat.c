@@ -93,7 +93,7 @@ int send_message(){
         if(person_message == NULL){
           printf(
             ANSI_COLOR_RED
-            "Mensagem vazia! Para saber como enviar uma "
+            "Mensagem inválida! Para saber como enviar uma "
             "mensagem, digite: help."
             ANSI_COLOR_GREEN
             "\n"
@@ -128,7 +128,7 @@ int send_message(){
         if(username != NULL && receiver_name == NULL){
           printf(
             ANSI_COLOR_RED
-            "Mensagem vazia! Para saber como enviar uma "
+            "Mensagem inválida! Para saber como enviar uma "
             "mensagem, digite: help."
             ANSI_COLOR_GREEN
             "\n"
