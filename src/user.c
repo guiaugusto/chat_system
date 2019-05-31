@@ -23,7 +23,7 @@ void open_person_queue(char *person_name){
         queue_name[i] = person_name[j];
     }
 
-    if((person_queue = mq_open(queue_name, O_RDWR|O_CREAT, 0666, &attr)) < 0){
+    if((person_queue = mq_open(queue_name, O_RDWR)) < 0){
         perror("person name mq_open");
         exit(1);
     }

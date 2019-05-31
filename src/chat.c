@@ -19,7 +19,7 @@ void open_queues(){
 
     mq_close(my_queue);
 
-    if((my_queue = mq_open(queue, O_RDWR|O_CREAT)) < 0){
+    if((my_queue = mq_open(queue, O_RDWR)) < 0){
         perror("guiaugusto read mq_open");
         exit(1);
     }
