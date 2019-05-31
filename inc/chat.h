@@ -28,5 +28,6 @@ void *receive_messages();
 int send_message();
 void control_handler(int sig);
 void send_message_to_all_users();
+void list_all_commands();
 
 #endif

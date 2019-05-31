@@ -53,6 +53,9 @@ int send_message(){
         strcat(queue_name, me);
         show_queue_information(queue_name);
         return 1;
+    }else if(strcmp(complete_message, "help") == 0){
+        list_all_commands();
+        return 1;
     }
 
     char split[] = ":";
@@ -243,4 +246,20 @@ void send_message_to_all_users(){
   }
 
   closedir(dr);
+}
+
+void list_all_commands(){
+  printf(ANSI_COLOR_RESET "Usage:\n");
+  printf("  To send messages: USERNAME:DESTINY:MESSAGE or DESTINY:MESSAGE\n");
+  printf("  To use commands: COMMAND\n\n");
+  printf("A simple irc system to chat via ssh.\n\n");
+  printf("Commands:\n");
+  printf("  stats\t Shows user queue stats\n");
+  printf("  list\t Lists all users connected\n");
+  printf("  sair\t Ends application execution\n");
+  printf(
+    "  help\t Shows how to send messages and use commands"
+    ANSI_COLOR_GREEN
+    "\n"
+  );
 }
