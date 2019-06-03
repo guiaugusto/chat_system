@@ -19,9 +19,7 @@ void open_person_queue(char *person_name){
     char queue_name[16] = "/chat-";
     int i, j;
 
-    for(i = 6, j = 0; j < strlen(person_name); i++, j++){
-        queue_name[i] = person_name[j];
-    }
+    strcat(queue_name, person_name);
 
     if((person_queue = mq_open(queue_name, O_RDWR)) < 0){
         perror("person name mq_open");

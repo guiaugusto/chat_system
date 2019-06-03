@@ -226,7 +226,7 @@ void send_message_to_all_users(){
             user_name[j] = queue_name[i];
           }
 
-          if(strcmp(user_name, me) != 0){
+          if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
             open_person_queue(user_name);
 
             int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
@@ -239,6 +239,7 @@ void send_message_to_all_users(){
             close_person_queue(user_name);
             memset(user_name, 0, sizeof(user_name));
             memset(header, 0, sizeof(header));
+            memset(complete_message, 0, sizeof(complete_message));
           }
 
         }
