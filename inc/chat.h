@@ -20,6 +20,7 @@
 #include <dirent.h>
 
 struct mq_attr attr;
+struct timespec abs_timeout;
 char complete_message[522];
 char complete_response[522];
 

@@ -6,23 +6,35 @@ void set_chat_configuration(){
     attr.mq_maxmsg = 10;
     attr.mq_msgsize = sizeof(complete_message);
     attr.mq_flags = 0;
+    abs_timeout.tv_sec = 1;
 }
 
 void open_queues(){
     char queue[16] = "/chat-";
+    char mode[] = "0622";
+    int permission = strtol(mode, 0, 8);
     strcat(queue, me);
 
-     if((my_queue = mq_open(queue, O_RDWR|O_CREAT, 0622, &attr)) < 0){
-        perror("mq_open");
+     if((my_queue = mq_open(queue, O_CREAT, permission, &attr)) < 0){
+        perror("create queue error");
         exit(1);
     }
 
     mq_close(my_queue);
 
     if((my_queue = mq_open(queue, O_RDWR)) < 0){
-        perror("guiaugusto read mq_open");
+        perror("read mq_open");
         exit(1);
     }
+
+    char queue_location[50] = "/dev/mqueue";
+    strcat(queue_location, queue);
+    if(chmod(queue_location, permission) < 0){
+        perror("chmod error");
+        exit(1);
+    }
+
+    memset(queue_location, 0, sizeof(queue_location));
 }
 
 int send_message(){
@@ -152,11 +164,34 @@ int send_message(){
 
     open_person_queue(receiver_name);
 
-    int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
+    int send, tries = 0;
+
+    do{
+      send = mq_timedsend (
+        person_queue,
+        (void *) &complete_message,
+        strlen(complete_message),
+        0,
+        &abs_timeout
+      );
+      if(send == 0) break;
+      sleep(1);
+      printf(
+        ANSI_COLOR_YELLOW
+        "Tentativa %d de enviar mensagem à %s\n"
+        ANSI_COLOR_GREEN,
+        tries+1,
+        receiver_name
+      );
+      tries++;
+    }while(send < 0 && tries != 3);
 
     if (send < 0){
-        perror("guiaugusto mq_send");
-        exit(1);
+      printf(
+        ANSI_COLOR_RED
+        "Não foi possível enviar a mensagem à %s\n",
+        receiver_name
+      );
     }
 
     close_person_queue(receiver_name);
@@ -245,11 +280,24 @@ void send_message_to_all_users(){
         if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
           open_person_queue(user_name);
 
-          int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
+          int send, tries = 0;
+
+          do{
+            send = mq_timedsend (
+              person_queue,
+              (void *) &complete_message,
+              strlen(complete_message),
+              0,
+              &abs_timeout
+            );
+            if(send == 0) break;
+            sleep(1);
+            printf("Tentativa %d de enviar mensagem à %s\n", tries+1, user_name);
+            tries++;
+          }while(send < 0 && tries != 3);
 
           if (send < 0){
-            perror("guiaugusto mq_send");
-            exit(1);
+            printf("Não foi possível enviar a mensagem à %s\n", user_name);
           }
 
           close_person_queue(user_name);
