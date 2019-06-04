@@ -12,7 +12,7 @@ void open_queues(){
     char queue[16] = "/chat-";
     strcat(queue, me);
 
-     if((my_queue = mq_open(queue, O_RDWR|O_CREAT, 0644, &attr)) < 0){
+     if((my_queue = mq_open(queue, O_RDWR|O_CREAT, 0622, &attr)) < 0){
         perror("mq_open");
         exit(1);
     }
@@ -171,13 +171,18 @@ void *receive_messages(){
 
   while(1){
       int receive = mq_receive(my_queue, (void*) &complete_response, sizeof(complete_response), 0);
-
       char split[] = ":";
       sender_name = strtok(complete_response, split);
       user_name = strtok(NULL, split);
       sender_message = strtok(NULL, split);
 
-      printf(ANSI_COLOR_BLUE "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
+      if(strcmp(user_name, "all") == 0){
+        // Broadcast message
+        printf(ANSI_COLOR_BLUE "Broadcast de %s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
+      }else{
+        // Private message
+        printf(ANSI_COLOR_MAGENTA "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
+      }
 
       memset(user_name, 0, sizeof(user_name));
       memset(sender_name, 0, sizeof(sender_name));
@@ -210,40 +215,48 @@ void send_message_to_all_users(){
       return;
   }
 
-  char queue_destiny_name[15] = "chat-";
-  char user_name[10];
+  char queue_destiny_name[] = "chat-";
   char header[6];
+  char queue_aux[17];
+  char *auxiliar_header = NULL;
+  char *auxiliar_name = NULL;
+  char user_name[11];
   int i, j;
 
   while((de = readdir(dr)) != NULL){
       queue_name = de->d_name;
-      if(strlen(queue_name) >= 6){
-        for(i = 0; i < 5; i++){
-          header[i] = queue_name[i];
-        }
-        if(strcmp(header, queue_destiny_name) == 0){
-          for(j = 0; i < strlen(queue_name); i++, j++){
-            user_name[j] = queue_name[i];
+
+      if(queue_name[0] == '.'){
+        continue;
+      }
+
+      memset(queue_aux, 0, sizeof(queue_aux));
+      strncpy(queue_aux, queue_name, 5);
+      memset(header, 0, sizeof(header));
+      strcpy(header, queue_aux);
+
+      if(strcmp(header, queue_destiny_name) == 0){
+        auxiliar_header = strtok(queue_name, "-");
+        auxiliar_name = strtok(NULL, "-");
+
+        memset(user_name, 0, sizeof(user_name));
+        strcpy(user_name, auxiliar_name);
+
+        if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
+          open_person_queue(user_name);
+
+          int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
+
+          if (send < 0){
+            perror("guiaugusto mq_send");
+            exit(1);
           }
 
-          if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
-            open_person_queue(user_name);
-
-            int send = mq_send (person_queue, (void *) &complete_message, strlen(complete_message), 0);
-
-            if (send < 0){
-              perror("guiaugusto mq_send");
-              exit(1);
-            }
-
-            close_person_queue(user_name);
-            memset(user_name, 0, sizeof(user_name));
-            memset(header, 0, sizeof(header));
-            memset(complete_message, 0, sizeof(complete_message));
-          }
-
+          close_person_queue(user_name);
         }
       }
+      memset(auxiliar_name, 0, sizeof(auxiliar_name));
+      memset(auxiliar_header, 0, sizeof(auxiliar_header));
   }
 
   closedir(dr);
