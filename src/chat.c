@@ -162,41 +162,52 @@ int send_message(){
       }
     }
 
-    open_person_queue(receiver_name);
+    strcpy(user_to_send, receiver_name);
+    strcpy(final_message, complete_message);
 
-    int send, tries = 0;
-
-    do{
-      send = mq_timedsend (
-        person_queue,
-        (void *) &complete_message,
-        strlen(complete_message),
-        0,
-        &abs_timeout
-      );
-      if(send == 0) break;
-      sleep(1);
-      printf(
-        ANSI_COLOR_YELLOW
-        "Tentativa %d de enviar mensagem à %s\n"
-        ANSI_COLOR_GREEN,
-        tries+1,
-        receiver_name
-      );
-      tries++;
-    }while(send < 0 && tries != 3);
-
-    if (send < 0){
-      printf(
-        ANSI_COLOR_RED
-        "Não foi possível enviar a mensagem à %s\n",
-        receiver_name
-      );
-    }
-
-    close_person_queue(receiver_name);
+    pthread_t thread;
+    pthread_create(&thread, NULL, send_message_to_user, NULL);
 
     return 1;
+}
+
+void *send_message_to_user(){
+
+  open_person_queue(user_to_send);
+
+  int send, tries = 0;
+
+  do{
+    send = mq_timedsend (
+      person_queue,
+      (void *) &final_message,
+      strlen(final_message),
+      0,
+      &abs_timeout
+    );
+    if(send == 0) break;
+    sleep(1);
+    printf(
+      ANSI_COLOR_YELLOW
+      "Tentativa %d de enviar mensagem à %s\n"
+      ANSI_COLOR_GREEN,
+      tries+1,
+      user_to_send
+    );
+    tries++;
+  }while(send < 0 && tries != 3);
+
+  if (send < 0){
+    printf(
+      ANSI_COLOR_RED
+      "Não foi possível enviar a mensagem à %s\n",
+      user_to_send
+    );
+  }
+
+  // printf("message: %s\n", complete_message);
+
+  close_person_queue(user_to_send);
 }
 
 void *receive_messages(){
@@ -278,29 +289,11 @@ void send_message_to_all_users(){
         strcpy(user_name, auxiliar_name);
 
         if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
-          open_person_queue(user_name);
+          strcpy(user_to_send, user_name);
+          strcpy(final_message, complete_message);
 
-          int send, tries = 0;
-
-          do{
-            send = mq_timedsend (
-              person_queue,
-              (void *) &complete_message,
-              strlen(complete_message),
-              0,
-              &abs_timeout
-            );
-            if(send == 0) break;
-            sleep(1);
-            printf("Tentativa %d de enviar mensagem à %s\n", tries+1, user_name);
-            tries++;
-          }while(send < 0 && tries != 3);
-
-          if (send < 0){
-            printf("Não foi possível enviar a mensagem à %s\n", user_name);
-          }
-
-          close_person_queue(user_name);
+          pthread_t thread;
+          pthread_create(&thread, NULL, send_message_to_user, NULL);
         }
       }
       memset(auxiliar_name, 0, sizeof(auxiliar_name));

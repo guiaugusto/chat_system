@@ -23,6 +23,7 @@ struct mq_attr attr;
 struct timespec abs_timeout;
 char complete_message[522];
 char complete_response[522];
+char final_message[522];
 
 void set_chat_configuration();
 void open_queues();
@@ -31,5 +32,6 @@ int send_message();
 void control_handler(int sig);
 void send_message_to_all_users();
 void list_all_commands();
+void *send_message_to_user();
 
 #endif

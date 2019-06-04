@@ -15,6 +15,7 @@
 char person_name[10];
 char message[500];
 char me[10];
+char user_to_send[10];
 
 mqd_t my_queue;
 mqd_t person_queue;
