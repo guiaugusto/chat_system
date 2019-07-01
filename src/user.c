@@ -4,13 +4,17 @@
 
 int define_user_name(){
     printf("Username (max 10 characters): ");
+
     scanf("%[^\n]*c", me);
     getchar();
+
     if(validate_destiny_user(me)){
-     printf("Este username já está sendo usado!\n");
+      printf("Este username já está sendo usado!\n");
+
       return 1;
     }else{
       printf("Seu username é %s, não se esqueça!\n", me);
+
       return 0;
     }
 }

@@ -3,81 +3,81 @@
 #include "file.h"
 
 void show_all_users_online(){
-    struct dirent *de;
+  struct dirent *de;
 
-    DIR *dr = opendir("/dev/mqueue");
+  DIR *dr = opendir("/dev/mqueue");
 
-    if(dr == NULL){
-        printf("Could not open current directory" );
-        return;
-    }
+  if(dr == NULL){
+    printf("Could not open current directory" );
 
-    char *queue_name;
-    char user_name[10];
-    char init_queue_name[6];
-    int i, j;
+    return;
+  }
 
-    printf("Lista de usuários disponíveis:\n");
+  char *queue_name;
+  char user_name[10];
+  char init_queue_name[6];
+  int i, j;
 
-    while((de = readdir(dr)) != NULL){
-      queue_name = de->d_name;
+  printf("Lista de usuários disponíveis:\n");
 
-      if(strlen(queue_name) > 6){
-        for(i = 0; i < 6; i++){
-            init_queue_name[i] = queue_name[i];
-        }
+  while((de = readdir(dr)) != NULL){
+    queue_name = de->d_name;
 
-        if(strcmp(init_queue_name, "/chat-")){
-          for(i = 5, j = 0; i < strlen(queue_name); i++, j++){
-            user_name[j] = queue_name[i];
-          }
+    if(strlen(queue_name) > 6){
+      for(i = 0; i < 6; i++)
+        init_queue_name[i] = queue_name[i];
 
-          printf("-> %s\n", user_name);
-        }
+      if(strcmp(init_queue_name, "/chat-")){
+        for(i = 5, j = 0; i < strlen(queue_name); i++, j++)
+          user_name[j] = queue_name[i];
+
+        printf("-> %s\n", user_name);
       }
-
-      memset(queue_name, 0, sizeof(queue_name));
-      memset(user_name, 0, sizeof(user_name));
-      memset(init_queue_name, 0, sizeof(init_queue_name));
     }
 
-    closedir(dr);
+    memset(queue_name, 0, sizeof(queue_name));
+    memset(user_name, 0, sizeof(user_name));
+    memset(init_queue_name, 0, sizeof(init_queue_name));
+  }
+
+  closedir(dr);
 }
 
 int validate_destiny_user(char *username){
-    struct dirent *de;
-    int exists = 0;
-    char *queue_name;
+  struct dirent *de;
+  int exists = 0;
+  char *queue_name;
 
-    DIR *dr = opendir("/dev/mqueue");
+  DIR *dr = opendir("/dev/mqueue");
 
-    if(dr == NULL){
-        printf("Diretório não pôde ser aberto.\n" );
-        return -1;
-    }
+  if(dr == NULL){
+    printf("Diretório não pôde ser aberto.\n" );
 
-    char queue_destiny_name[15] = "chat-";
-    strcat(queue_destiny_name, username);
+    return -1;
+  }
 
-    while((de = readdir(dr)) != NULL){
-        queue_name = de->d_name;
-        if(strcmp(queue_destiny_name, queue_name) == 0){
-            exists = 1;
-        }
-    }
+  char queue_destiny_name[15] = "chat-";
+  strcat(queue_destiny_name, username);
 
-    closedir(dr);
+  while((de = readdir(dr)) != NULL){
+    queue_name = de->d_name;
 
-    if(!exists){
-        return 0;
-    }else{
-        return 1;
-    }
+    if(strcmp(queue_destiny_name, queue_name) == 0)
+      exists = 1;
+  }
+
+  closedir(dr);
+
+  if(!exists)
+    return 0;
+  else
+    return 1;
 }
 
 void show_queue_information(char *filename){
   struct stat fileStat;
   char pathname[30];
+  
   memset(pathname, 0, sizeof(pathname));
   strcat(pathname, "/dev/mqueue");
   strcat(pathname, filename);
@@ -91,6 +91,7 @@ void show_queue_information(char *filename){
     ANSI_COLOR_YELLOW
     "--------------------------------------------------\n"
   );
+
   printf("\t\t  Informations\n");
   printf("--------------------------------------------------\n");
   printf("  File Size: \t\t%d bytes\n", (int) fileStat.st_size);
