@@ -13,10 +13,10 @@ void show_all_users_online(){
     return;
   }
 
-  char *queue_name;
-  char user_name[10];
-  char init_queue_name[6];
-  int i, j;
+    char *queue_name;
+    char user_name[12];
+    char init_queue_name[6];
+    int i, j;
 
   printf("Lista de usuários disponíveis:\n");
 
@@ -77,7 +77,7 @@ int validate_destiny_user(char *username){
 void show_queue_information(char *filename){
   struct stat fileStat;
   char pathname[30];
-  
+
   memset(pathname, 0, sizeof(pathname));
   strcat(pathname, "/dev/mqueue");
   strcat(pathname, filename);

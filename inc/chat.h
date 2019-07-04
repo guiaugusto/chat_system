@@ -21,9 +21,9 @@
 
 struct mq_attr attr;
 struct timespec abs_timeout;
-char complete_message[522];
-char complete_response[522];
-char final_message[522];
+char complete_message[523];
+char complete_response[523];
+char final_message[523];
 
 void set_chat_configuration();
 void open_queues();

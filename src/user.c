@@ -5,16 +5,19 @@
 int define_user_name(){
     printf("Username (max 10 characters): ");
 
-    scanf("%[^\n]*c", me);
+    char *auxiliar_name;
+    scanf("%m[^\n]", &auxiliar_name);
     getchar();
 
-    if(validate_destiny_user(me)){
+    if(validate_username_size(auxiliar_name)){
+      printf("O username informado é muito grande!\n");
+      return 1;
+    }else if(validate_destiny_user(auxiliar_name)){
       printf("Este username já está sendo usado!\n");
-
       return 1;
     }else{
+      strcpy(me, auxiliar_name);
       printf("Seu username é %s, não se esqueça!\n", me);
-
       return 0;
     }
 }
@@ -33,4 +36,14 @@ void open_person_queue(char *person_name){
 
 void close_person_queue(char *person_name){
     mq_close(person_queue);
+}
+
+int validate_username_size(char *username){
+    int size = strlen(username);
+
+    if(size <= 10){
+      return 0;
+    }else{
+      return 1;
+    }
 }

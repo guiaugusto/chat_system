@@ -10,11 +10,10 @@ void set_chat_configuration(){
 }
 
 void open_queues(){
-  char queue[16] = "/chat-";
-  char mode[] = "0622";
+  char queue[17] = "/chat-";
   char queue_location[50] = "/dev/mqueue";
+  char mode[] = "0622";
   int permission = strtol(mode, 0, 8);
-
   strcat(queue, me);
 
   if((my_queue = mq_open(queue, O_CREAT, permission, &attr)) < 0){
@@ -321,7 +320,7 @@ void send_message_to_all_users(){
         pthread_create(&thread, NULL, send_message_to_user, NULL);
       }
     }
-    
+
     memset(auxiliar_name, 0, sizeof(auxiliar_name));
     memset(auxiliar_header, 0, sizeof(auxiliar_header));
   }
