@@ -12,7 +12,7 @@ int define_user_name(){
     if(validate_username_size(auxiliar_name)){
       printf("O username informado é muito grande!\n");
       return 1;
-    }else if(validate_destiny_user(auxiliar_name)){
+    }else if(validate_destiny_user(auxiliar_name, "chat-")){
       printf("Este username já está sendo usado!\n");
       return 1;
     }else{

@@ -14,7 +14,7 @@
 #include <time.h>
 
 void show_all_users_online();
-int validate_destiny_user(char *username);
+int validate_destiny_user(char *username, char *type);
 void show_queue_information(char *filename);
 
 #endif

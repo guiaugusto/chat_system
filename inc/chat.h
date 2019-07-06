@@ -24,6 +24,9 @@ struct timespec abs_timeout;
 char complete_message[523];
 char complete_response[523];
 char final_message[523];
+mqd_t group_queue[100];
+char own_groups[100][18];
+int counter;
 
 void set_chat_configuration();
 void open_queues();

@@ -7,6 +7,38 @@ void set_chat_configuration(){
   attr.mq_msgsize = sizeof(complete_message);
   attr.mq_flags = 0;
   abs_timeout.tv_sec = 1;
+  counter = 0;
+}
+
+void create_channel(char *channel){
+  char queue_channel[18] = "/canal-";
+  char queue_location[50] = "/dev/mqueue";
+  char mode[] = "0622";
+  int permission = strtol(mode, 0, 8);
+
+  strcat(queue_channel, channel);
+
+  if((group_queue[counter] = mq_open(queue_channel, O_CREAT, permission, &attr)) < 0){
+    perror("create channel error");
+    exit(1);
+  }
+
+  mq_close(group_queue[counter]);
+
+  if((group_queue[counter] = mq_open(queue_channel, O_RDWR)) < 0){
+    perror("read channel error");
+    exit(1);
+  }
+
+  strcat(queue_location, queue_channel);
+
+  if(chmod(queue_location, permission) < 0){
+    perror("chmod error");
+    exit(1);
+  }
+
+  memset(queue_location, 0, sizeof(queue_location));
+  counter++;
 }
 
 void open_queues(){
@@ -79,6 +111,13 @@ int send_message(){
     list_all_commands();
 
     return 1;
+  }else if(strcmp(complete_message, "new_channel") == 0){
+    char *group_name;
+    printf("Nome do grupo: ");
+    scanf("%m[^\n]", &group_name);
+    getchar();
+    create_channel(group_name);
+    return 1;
   }
 
   char split[] = ":";
@@ -109,7 +148,7 @@ int send_message(){
       send_message_to_all_users();
 
       return 1;
-    }else if(validate_destiny_user(receiver_name) == 0){
+    }else if(validate_destiny_user(receiver_name, "chat-") == 0){
       printf(
         ANSI_COLOR_YELLOW
         "UNKNOWNUSER %s\n"
@@ -134,7 +173,7 @@ int send_message(){
   }else{
     // Second message type
     if(username != NULL && receiver_name != NULL && person_message == NULL){
-      if(validate_destiny_user(username)){
+      if(validate_destiny_user(username, "chat-")){
         person_message = receiver_name;
         receiver_name = username;
         username = me;
@@ -247,6 +286,12 @@ void *receive_messages(){
       // Broadcast message
       printf(ANSI_COLOR_BLUE "Broadcast de %s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
     }else{
+      char group_name[17] = "/canal-";
+      strcat(group_name, user_name);
+
+      if(validate_destiny_user(group_name, "canal-")){
+        printf(ANSI_COLOR_RESET "%s(%s): %s" ANSI_COLOR_GREEN "\n", user_name, sender_name, sender_message);
+      }
       // Private message
       printf(ANSI_COLOR_MAGENTA "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
     }
@@ -312,7 +357,7 @@ void send_message_to_all_users(){
       memset(user_name, 0, sizeof(user_name));
       strcpy(user_name, auxiliar_name);
 
-      if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name)){
+      if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name, "chat-")){
         strcpy(user_to_send, user_name);
         strcpy(final_message, complete_message);
 
