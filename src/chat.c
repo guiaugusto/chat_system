@@ -10,22 +10,34 @@ void set_chat_configuration(){
   counter = 0;
 }
 
+void set_group_configuration(struct group_attrib *group){
+  group->group_attr.mq_maxmsg = 10;
+  group->group_attr.mq_msgsize = sizeof(complete_message);
+  group->group_attr.mq_flags = 0;
+  group->users_list = create_empty_list();
+  insert_element(&group->users_list, me);
+}
+
 void create_channel(char *channel){
   char queue_channel[18] = "/canal-";
   char queue_location[50] = "/dev/mqueue";
   char mode[] = "0622";
   int permission = strtol(mode, 0, 8);
 
+  struct group_attrib group;
+  strcpy(group.owner_nickname, me);
   strcat(queue_channel, channel);
-
-  if((group_queue[counter] = mq_open(queue_channel, O_CREAT, permission, &attr)) < 0){
+  strcpy(group.group_name, queue_channel);
+  set_group_configuration(&group);
+  own_groups[counter] = group;
+  if((own_groups[counter].queue = mq_open(queue_channel, O_CREAT, permission, &group)) < 0){
     perror("create channel error");
     exit(1);
   }
 
-  mq_close(group_queue[counter]);
+  mq_close(own_groups[counter].queue);
 
-  if((group_queue[counter] = mq_open(queue_channel, O_RDWR)) < 0){
+  if((own_groups[counter].queue = mq_open(queue_channel, O_RDWR)) < 0){
     perror("read channel error");
     exit(1);
   }
@@ -38,6 +50,7 @@ void create_channel(char *channel){
   }
 
   memset(queue_location, 0, sizeof(queue_location));
+  pthread_create(&own_groups[counter].thread, NULL, receive_messages, (void *)own_groups[counter].queue);
   counter++;
 }
 
@@ -73,7 +86,7 @@ void open_queues(){
 int send_message(){
   printf(ANSI_COLOR_GREEN);
   memset(complete_message, 0, sizeof(complete_message));
-
+  int is_channel = 0;
   int i = 0, j = strlen(me) + 1;
 
   signal(SIGINT, control_handler);
@@ -117,6 +130,23 @@ int send_message(){
     scanf("%m[^\n]", &group_name);
     getchar();
     create_channel(group_name);
+    printf("Canal criado com sucesso!\n");
+    return 1;
+  }else if(strcmp(complete_message, "list_my_groups") == 0){
+    printf("Lista de grupos criados:\n");
+    for(int i = 0; i < counter; i++){
+      printf("-> %s\n", own_groups[i].group_name);
+    }
+    return 1;
+  }else if(strcmp(complete_message, "get_info") == 0){
+    struct group_attrib info;
+    char queue_location[50] = "/dev/mqueue";
+    char mode[] = "0622";
+    int permission = strtol(mode, 0, 8);
+
+    printf("Informações:");
+    printf("Owner: %s\n", info.owner_nickname);
+
     return 1;
   }
 
@@ -132,23 +162,42 @@ int send_message(){
   receiver_name = strtok(NULL, split);
   person_message = strtok(NULL, split);
 
-  // First message type
-  if(strcmp(username, me) == 0){
-    if(receiver_name == NULL){
-      printf(
-        ANSI_COLOR_RED
-        "Usuário destinatário inválido! Para saber como enviar uma "
-        "mensagem, digite: help."
-        ANSI_COLOR_GREEN
-        "\n"
-      );
+  if(username == NULL){
+    printf(
+      ANSI_COLOR_RED
+      "Mensagem inválida! Para saber como enviar uma "
+      "mensagem, digite: help."
+      ANSI_COLOR_GREEN
+      "\n"
+    );
 
-      return 1;
-    }else if(strcmp(receiver_name, "all") == 0){
+    return 1;
+  }else if(receiver_name == NULL){
+    printf(
+      ANSI_COLOR_RED
+      "Usuário destinatário inválido! Para saber como enviar uma "
+      "mensagem, digite: help."
+      ANSI_COLOR_GREEN
+      "\n"
+    );
+
+    return 1;
+  }else if(person_message == NULL){
+    printf(
+      ANSI_COLOR_RED
+      "Mensagem inválida! Para saber como enviar uma "
+      "mensagem, digite: help."
+      ANSI_COLOR_GREEN
+      "\n"
+    );
+
+    return 1;
+  }else{
+    if(strcmp(receiver_name, "all") == 0){
       send_message_to_all_users();
 
       return 1;
-    }else if(validate_destiny_user(receiver_name, "chat-") == 0){
+    }else if(receiver_name[0] != '#' && !validate_destiny_user(receiver_name, "chat-")){
       printf(
         ANSI_COLOR_YELLOW
         "UNKNOWNUSER %s\n"
@@ -157,64 +206,14 @@ int send_message(){
       );
 
       return 1;
-    }else{
-      if(person_message == NULL){
-        printf(
-          ANSI_COLOR_RED
-          "Mensagem inválida! Para saber como enviar uma "
-          "mensagem, digite: help."
-          ANSI_COLOR_GREEN
-          "\n"
-        );
-
-        return 1;
-      }
-    }
-  }else{
-    // Second message type
-    if(username != NULL && receiver_name != NULL && person_message == NULL){
-      if(validate_destiny_user(username, "chat-")){
-        person_message = receiver_name;
-        receiver_name = username;
-        username = me;
-
-        memset(complete_message, 0, sizeof(complete_message));
-
-        strcat(complete_message, username);
-        strcat(complete_message, ":");
-        strcat(complete_message, receiver_name);
-        strcat(complete_message, ":");
-        strcat(complete_message, person_message);
-      }else{
-        printf(
-          ANSI_COLOR_RED
-          "Usuário inválido! Para saber como enviar uma "
-          "mensagem, digite: help."
-          ANSI_COLOR_GREEN
-          "\n"
-        );
-      }
-    }else{
-      if(username != NULL && receiver_name == NULL){
-        printf(
-          ANSI_COLOR_RED
-          "Mensagem inválida! Para saber como enviar uma "
-          "mensagem, digite: help."
-          ANSI_COLOR_GREEN
-          "\n"
-        );
-
-        return 1;
-      }else if(username == NULL){
-        printf(
-          ANSI_COLOR_RED
-          "Usuário destinatário inválido! Para saber como enviar uma "
-          "mensagem, digite: help."
-          ANSI_COLOR_GREEN
-          "\n"
-        );
-
-        return 1;
+    }else if(receiver_name[0] == '#'){
+      char *channel_name;
+      channel_name = strtok(receiver_name, "#");
+      strcpy(receiver_name, channel_name);
+      int i;
+      is_channel = 1;
+      if(!validate_destiny_user(receiver_name, "canal-")){
+        printf(ANSI_COLOR_RED "Este canal não existe!" ANSI_COLOR_GREEN "\n");
       }
     }
   }
@@ -222,14 +221,17 @@ int send_message(){
   strcpy(user_to_send, receiver_name);
   strcpy(final_message, complete_message);
 
+  if(is_channel) strcpy(channel_type, "/canal-");
+  else strcpy(channel_type, "/chat-");
+
   pthread_t thread;
   pthread_create(&thread, NULL, send_message_to_user, NULL);
-
+  is_channel = 0;
   return 1;
 }
 
 void *send_message_to_user(){
-  open_person_queue(user_to_send);
+  open_person_queue(user_to_send, channel_type);
 
   int send, tries = 0;
 
@@ -269,16 +271,17 @@ void *send_message_to_user(){
   close_person_queue(user_to_send);
 }
 
-void *receive_messages(){
+void *receive_messages(mqd_t myqueue){
   char *sender_name;
   char *user_name;
   char *sender_message;
+  char response[527];
 
   while(1){
-    int receive = mq_receive(my_queue, (void*) &complete_response, sizeof(complete_response), 0);
+    mq_receive(myqueue, (void*) &response, sizeof(response), 0);
     char split[] = ":";
 
-    sender_name = strtok(complete_response, split);
+    sender_name = strtok(response, split);
     user_name = strtok(NULL, split);
     sender_message = strtok(NULL, split);
 
@@ -287,18 +290,43 @@ void *receive_messages(){
       printf(ANSI_COLOR_BLUE "Broadcast de %s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
     }else{
       char group_name[17] = "/canal-";
+      user_name = strtok(user_name, "#");
       strcat(group_name, user_name);
 
-      if(validate_destiny_user(group_name, "canal-")){
-        printf(ANSI_COLOR_RESET "%s(%s): %s" ANSI_COLOR_GREEN "\n", user_name, sender_name, sender_message);
+      if(validate_destiny_user(user_name, "canal-")){
+        int is_member = 0, i, j;
+
+        for(i = 0; i < counter; i++){
+          if(strcmp(own_groups[i].group_name, group_name) == 0){
+            break;
+          }
+        }
+
+        is_member = check_user_in_list(own_groups[i].users_list, sender_name);
+
+        if(is_member){
+          if(strcmp(sender_message, "join") == 0){
+            printf(ANSI_COLOR_YELLOW "Você já pertence a este grupo!" ANSI_COLOR_GREEN "\n");
+          }else{
+            printf(ANSI_COLOR_ORANGE "%s(%s): %s" ANSI_COLOR_GREEN "\n", user_name, sender_name, sender_message);
+          }
+        }else{
+          if(strcmp(sender_message, "join") == 0){
+            insert_element(&own_groups[i].users_list, sender_name);
+          }else{
+            printf(ANSI_COLOR_YELLOW "Você não pertence a este grupo!" ANSI_COLOR_GREEN "\n");
+          }
+        }
+
+      }else{
+        // Private message
+        printf(ANSI_COLOR_MAGENTA "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
       }
-      // Private message
-      printf(ANSI_COLOR_MAGENTA "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
     }
 
     memset(user_name, 0, sizeof(user_name));
     memset(sender_name, 0, sizeof(sender_name));
-    memset(complete_response, 0, sizeof(complete_response));
+    memset(response, 0, sizeof(response));
     memset(sender_message, 0, sizeof(sender_message));
   }
 
@@ -382,6 +410,7 @@ void list_all_commands(){
   printf("  stats\t Shows user queue stats\n");
   printf("  list\t Lists all users connected\n");
   printf("  sair\t Ends application execution\n");
+  printf("  list_my_groups\t List all groups created\n");
   printf(
     "  help\t Shows how to send messages and use commands"
     ANSI_COLOR_GREEN

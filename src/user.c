@@ -22,14 +22,15 @@ int define_user_name(){
     }
 }
 
-void open_person_queue(char *person_name){
-    char queue_name[16] = "/chat-";
+void open_person_queue(char *person_name, char *type){
+    char queue_name[16];
     int i, j;
 
+    strcat(queue_name, type);
     strcat(queue_name, person_name);
 
     if((person_queue = mq_open(queue_name, O_WRONLY)) < 0){
-        perror("person name mq_open");
+        perror("queue name mq_open");
         exit(1);
     }
 }

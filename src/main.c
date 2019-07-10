@@ -10,7 +10,7 @@ int main(){
     open_queues();
 
     pthread_t thread;
-    pthread_create(&thread, NULL, receive_messages, NULL);
+    pthread_create(&thread, NULL, receive_messages, (void *)my_queue);
 
     while(send_message());
 
