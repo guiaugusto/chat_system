@@ -23,7 +23,7 @@ mqd_t person_queue;
 
 void chat_name(char *queue_name, char *user_name);
 int define_user_name();
-void open_person_queue(char *person_name);
+void open_person_queue(char *person_name, char *type);
 void close_person_queue(char *person_name);
 int validate_username_size(char *username);
 
