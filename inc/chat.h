@@ -19,19 +19,31 @@
 #include <string.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <list.h>
+
+struct group_attrib{
+  struct mq_attr group_attr;
+  char owner_nickname[20];
+  char group_name[20];
+  List *users_list;
+  pthread_t thread;
+  mqd_t queue;
+};
 
 struct mq_attr attr;
+
 struct timespec abs_timeout;
 char complete_message[523];
 char complete_response[523];
 char final_message[523];
-mqd_t group_queue[100];
-char own_groups[100][18];
+// mqd_t group_queue[100];
+struct group_attrib own_groups[100];
 int counter;
+char channel_type[8];
 
 void set_chat_configuration();
 void open_queues();
-void *receive_messages();
+void *receive_messages(mqd_t queue);
 int send_message();
 void control_handler(int sig);
 void send_message_to_all_users();
