@@ -7,6 +7,7 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_MAGENTA "\e[38;5;200m"
+#define ANSI_COLOR_ORANGE "\e[38;5;202m"
 
 #include <stdio.h>
 #include <stdlib.h>
