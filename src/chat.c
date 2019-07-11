@@ -50,7 +50,7 @@ void create_channel(char *channel){
   }
 
   memset(queue_location, 0, sizeof(queue_location));
-  pthread_create(&own_groups[counter].thread, NULL, receive_messages, (void *)own_groups[counter].queue);
+  pthread_create(&own_groups[counter].thread, NULL, receive_messages, (void*)own_groups[counter].queue);
   counter++;
 }
 
@@ -214,23 +214,28 @@ int send_message(){
       is_channel = 1;
       if(!validate_destiny_user(receiver_name, "canal-")){
         printf(ANSI_COLOR_RED "Este canal não existe!" ANSI_COLOR_GREEN "\n");
+      }else{
+        //entra no canal
       }
     }
   }
 
   strcpy(user_to_send, receiver_name);
-  strcpy(final_message, complete_message);
+  // strcpy(final_message, complete_message);
 
   if(is_channel) strcpy(channel_type, "/canal-");
   else strcpy(channel_type, "/chat-");
 
+  char current_message[523];
+  strcpy(current_message, complete_message);
+
   pthread_t thread;
-  pthread_create(&thread, NULL, send_message_to_user, NULL);
+  pthread_create(&thread, NULL, send_message_to_user, (void *)current_message);
   is_channel = 0;
   return 1;
 }
 
-void *send_message_to_user(){
+void *send_message_to_user(char *current_message){
   open_person_queue(user_to_send, channel_type);
 
   int send, tries = 0;
@@ -238,8 +243,8 @@ void *send_message_to_user(){
   do{
     send = mq_timedsend (
       person_queue,
-      (void *) &final_message,
-      strlen(final_message),
+      (void *)current_message,
+      strlen(current_message),
       0,
       &abs_timeout
     );
@@ -306,7 +311,7 @@ void *receive_messages(mqd_t myqueue){
 
         if(is_member){
           if(strcmp(sender_message, "join") == 0){
-            printf(ANSI_COLOR_YELLOW "Você já pertence a este grupo!" ANSI_COLOR_GREEN "\n");
+            // printf(ANSI_COLOR_YELLOW "Você já pertence a este grupo!" ANSI_COLOR_GREEN "\n");
           }else{
             printf(ANSI_COLOR_ORANGE "%s(%s): %s" ANSI_COLOR_GREEN "\n", user_name, sender_name, sender_message);
           }
@@ -314,7 +319,20 @@ void *receive_messages(mqd_t myqueue){
           if(strcmp(sender_message, "join") == 0){
             insert_element(&own_groups[i].users_list, sender_name);
           }else{
-            printf(ANSI_COLOR_YELLOW "Você não pertence a este grupo!" ANSI_COLOR_GREEN "\n");
+            char current_message[523];
+            char channel[20] = "#";
+            strcat(channel, user_name);
+
+            strcat(current_message, channel);
+            strcat(current_message, ":");
+            strcat(current_message, sender_name);
+            strcat(current_message, ":");
+            strcat(current_message, "NOT A MEMBER");
+
+            strcpy(user_to_send, sender_name);
+            strcpy(channel_type, "/chat-");
+            pthread_t thread;
+            pthread_create(&thread, NULL, send_message_to_user, (void*)current_message);
           }
         }
 
@@ -387,10 +405,11 @@ void send_message_to_all_users(){
 
       if(strcmp(user_name, me) != 0 && validate_destiny_user(user_name, "chat-")){
         strcpy(user_to_send, user_name);
-        strcpy(final_message, complete_message);
+        char current_message[523];
+        strcpy(current_message, complete_message);
 
         pthread_t thread;
-        pthread_create(&thread, NULL, send_message_to_user, NULL);
+        pthread_create(&thread, NULL, send_message_to_user, (void *) current_message);
       }
     }
 
