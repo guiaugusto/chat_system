@@ -30,6 +30,12 @@ struct group_attrib{
   mqd_t queue;
 };
 
+typedef struct message_object{
+  char current_message[523];
+  char user_to_send[20];
+  char channel_type[10];
+}message_object;
+
 struct mq_attr attr;
 
 struct timespec abs_timeout;

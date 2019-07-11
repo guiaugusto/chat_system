@@ -54,6 +54,28 @@ void create_channel(char *channel){
   counter++;
 }
 
+void channel_callback(char *channel) {
+  char queue_channel[18] = "/canal-";
+  char queue_location[50] = "/dev/mqueue";
+  char mode[] = "0622";
+  int permission = strtol(mode, 0, 8);
+
+  struct group_attrib group;
+  strcpy(group.owner_nickname, me);
+  strcat(queue_channel, channel);
+  printf("queue_channel: %s\n", queue_channel);
+  strcpy(group.group_name, queue_channel);
+  set_group_configuration(&group);
+  own_groups[counter] = group;
+
+  if((own_groups[counter].queue = mq_open(queue_channel, O_RDWR, permission, &group)) < 0){
+    perror("channel callback error");
+    exit(1);
+  }
+
+  counter++;
+}
+
 void open_queues(){
   char queue[17] = "/chat-";
   char queue_location[50] = "/dev/mqueue";
@@ -216,6 +238,7 @@ int send_message(){
         printf(ANSI_COLOR_RED "Este canal não existe!" ANSI_COLOR_GREEN "\n");
       }else{
         //entra no canal
+        // channel_callback(receiver_name);
       }
     }
   }
@@ -229,22 +252,27 @@ int send_message(){
   char current_message[523];
   strcpy(current_message, complete_message);
 
+  message_object *m_object = (message_object *) malloc (sizeof(message_object));
+  strcpy(m_object->current_message, current_message);
+  strcpy(m_object->user_to_send, user_to_send);
+  strcpy(m_object->channel_type, channel_type);
+
   pthread_t thread;
-  pthread_create(&thread, NULL, send_message_to_user, (void *)current_message);
+  pthread_create(&thread, NULL, send_message_to_user, (void *)m_object);
   is_channel = 0;
   return 1;
 }
 
-void *send_message_to_user(char *current_message){
-  open_person_queue(user_to_send, channel_type);
+void *send_message_to_user(message_object *m_object){
+  open_person_queue(m_object->user_to_send, m_object->channel_type);
 
   int send, tries = 0;
 
   do{
     send = mq_timedsend (
       person_queue,
-      (void *)current_message,
-      strlen(current_message),
+      (void *)m_object->current_message,
+      strlen(m_object->current_message),
       0,
       &abs_timeout
     );
@@ -259,7 +287,7 @@ void *send_message_to_user(char *current_message){
       "Tentativa %d de enviar mensagem à %s\n"
       ANSI_COLOR_GREEN,
       tries+1,
-      user_to_send
+      m_object->user_to_send
     );
 
     tries++;
@@ -269,11 +297,11 @@ void *send_message_to_user(char *current_message){
     printf(
       ANSI_COLOR_RED
       "Não foi possível enviar a mensagem à %s\n",
-      user_to_send
+      m_object->user_to_send
     );
   }
 
-  close_person_queue(user_to_send);
+  close_person_queue(m_object->user_to_send);
 }
 
 void *receive_messages(mqd_t myqueue){
@@ -293,7 +321,7 @@ void *receive_messages(mqd_t myqueue){
     if(strcmp(user_name, "all") == 0){
       // Broadcast message
       printf(ANSI_COLOR_BLUE "Broadcast de %s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
-    }else{
+    }else if(user_name[0] == '#'){
       char group_name[17] = "/canal-";
       user_name = strtok(user_name, "#");
       strcat(group_name, user_name);
@@ -312,8 +340,40 @@ void *receive_messages(mqd_t myqueue){
         if(is_member){
           if(strcmp(sender_message, "join") == 0){
             // printf(ANSI_COLOR_YELLOW "Você já pertence a este grupo!" ANSI_COLOR_GREEN "\n");
+          }else if(strcmp(sender_message, "leave") == 0){
+            remove_element(&own_groups[i].users_list, sender_name);
           }else{
-            printf(ANSI_COLOR_ORANGE "%s(%s): %s" ANSI_COLOR_GREEN "\n", user_name, sender_name, sender_message);
+            char current_message[523];
+            char final_response[523];
+            char channel[20] = "#";
+            List *list = own_groups[i].users_list;
+
+            while(list != NULL){
+              strcat(channel, user_name);
+              strcat(current_message, channel);
+              strcat(current_message, ":");
+              strcat(current_message, list->name);
+              strcat(current_message, ":");
+              strcat(current_message, "<");
+              strcat(current_message, sender_name);
+              strcat(current_message, ">");
+              strcat(current_message, sender_message);
+
+              strcpy(user_to_send, list->name);
+              strcpy(channel_type, "/chat-");
+              pthread_t thread;
+
+              message_object *m_object = (message_object *) malloc (sizeof(message_object));
+              strcpy(m_object->current_message, current_message);
+              strcpy(m_object->user_to_send, list->name);
+              strcpy(m_object->channel_type, "/chat-");
+
+              pthread_create(&thread, NULL, send_message_to_user, (void*)m_object);
+              memset(current_message, 0, sizeof(current_message));
+              memset(channel, 0, sizeof(channel));
+              channel[0] = '#';
+              list = list->next;
+            }
           }
         }else{
           if(strcmp(sender_message, "join") == 0){
@@ -323,19 +383,41 @@ void *receive_messages(mqd_t myqueue){
             char channel[20] = "#";
             strcat(channel, user_name);
 
-            strcat(current_message, channel);
-            strcat(current_message, ":");
             strcat(current_message, sender_name);
             strcat(current_message, ":");
+            strcat(current_message, channel);
+            strcat(current_message, ":");
             strcat(current_message, "NOT A MEMBER");
+
+            printf("%s\n", current_message);
 
             strcpy(user_to_send, sender_name);
             strcpy(channel_type, "/chat-");
             pthread_t thread;
-            pthread_create(&thread, NULL, send_message_to_user, (void*)current_message);
+
+            struct message_object *m_object;
+            strcpy(m_object->current_message, current_message);
+            strcpy(m_object->user_to_send, sender_name);
+            strcpy(m_object->channel_type, "/chat-");
+
+            pthread_create(&thread, NULL, send_message_to_user, (void*)m_object);
           }
         }
+      }
+    }else{
+      if(sender_name[0] == '#'){
+        char *sender;
+        char f_message[523];
+        strcpy(f_message, sender_message);
 
+        sender = strtok(sender_message, "<");
+        sender = strtok(sender, ">");
+
+        sender_message = strtok(f_message, ">");
+        sender_message = strtok(NULL, ">");
+
+        sender_name = strtok(sender_name, "#");
+        printf(ANSI_COLOR_ORANGE "%s(%s): %s" ANSI_COLOR_GREEN "\n", sender_name, sender, sender_message);
       }else{
         // Private message
         printf(ANSI_COLOR_MAGENTA "%s: %s" ANSI_COLOR_GREEN "\n", sender_name, sender_message);
@@ -408,8 +490,13 @@ void send_message_to_all_users(){
         char current_message[523];
         strcpy(current_message, complete_message);
 
+        message_object *m_object = (message_object *) malloc (sizeof(message_object));
+        strcpy(m_object->current_message, current_message);
+        strcpy(m_object->user_to_send, user_to_send);
+        strcpy(m_object->channel_type, "/chat-");
+
         pthread_t thread;
-        pthread_create(&thread, NULL, send_message_to_user, (void *) current_message);
+        pthread_create(&thread, NULL, send_message_to_user, (void *)m_object);
       }
     }
 
